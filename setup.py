@@ -4,6 +4,10 @@ setup(
     name='anycsv',
     version='0.1',
     packages=find_packages(),
+    install_requires=[
+        'requests',
+        'chardet'
+    ],
     url='https://github.com/sebneu/anycsv',
     license='',
     author='Sebastian Neumaier',
