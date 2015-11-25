@@ -115,45 +115,56 @@ def extract_csv_meta(header, fName=None, content=None, id=''):
     return results
 
 
-class EncodedCsvReader:
-    def __init__(self, f, encoding="utf-8-sig", delimiter="\t", quotechar="'",  eol="\n", **kwds):
-        self.encoding=encoding
-        if not quotechar:
-            quotechar="'"
-        if not encoding:
-            self.encoding='utf-8-sig'
+class CsvReader:
 
+    def __init__(self, f, reader, encoding):
+        self.f = f
+        self.reader = reader
+        self.encoding = encoding
+
+    def __iter__(self):
+        return self
+
+    def seek(self, i):
+        self.f.seek(i)
+
+    @property
+    def line_num(self):
+        return self.reader.line_num
+
+
+class EncodedCsvReader(CsvReader):
+    def __init__(self, f, encoding="utf-8-sig", delimiter="\t", quotechar="'", **kwds):
+        if not quotechar:
+            quotechar = "'"
+        if not encoding:
+            encoding = 'utf-8-sig'
         if not delimiter:
-            self.reader = csv.reader(f, quotechar=quotechar.encode('ascii'), **kwds)
+            reader = csv.reader(f, quotechar=quotechar.encode('ascii'), **kwds)
         else:
-            self.reader = csv.reader(f, delimiter=delimiter.encode('ascii'), quotechar=quotechar.encode('ascii'), **kwds)
+            reader = csv.reader(f, delimiter=delimiter.encode('ascii'), quotechar=quotechar.encode('ascii'),
+                                     **kwds)
+        CsvReader.__init__(self, f, reader, encoding)
 
     def next(self):
         row = self.reader.next()
         result = [unicode(s.decode(self.encoding)) for s in row]
         return result
 
-    def __iter__(self):
-        return self
 
-
-class UnicodeReader(object):
-    def __init__(self, f, delimiter="\t", quotechar="'", encoding='utf-8', errors='strict',
-                 **kwds):
-        format_params = ['delimiter', 'doublequote', 'escapechar', 'lineterminator', 'quotechar', 'quoting', 'skipinitialspace']
-        #if dialect is None:
-        #    if not any([kwd_name in format_params for kwd_name in kwds.keys()]):
-        #        dialect = csv.excel
+class UnicodeReader(CsvReader):
+    def __init__(self, f, delimiter="\t", quotechar="'", encoding='utf-8', errors='strict', **kwds):
         if not quotechar:
-            quotechar="'"
+            quotechar = "'"
         if not encoding:
-            encoding='utf-8'
+            encoding = 'utf-8'
         if not delimiter:
-            self.reader = csv.reader(f, quotechar=quotechar.encode('ascii'), **kwds)
+            reader = csv.reader(f, quotechar=quotechar.encode('ascii'), **kwds)
         else:
-            self.reader = csv.reader(f, delimiter=delimiter.encode('ascii'), quotechar=quotechar.encode('ascii'), **kwds)
-        self.encoding = encoding
+            reader = csv.reader(f, delimiter=delimiter.encode('ascii'), quotechar=quotechar.encode('ascii'),
+                                     **kwds)
         self.encoding_errors = errors
+        CsvReader.__init__(self, f, reader, encoding)
 
     def next(self):
         row = self.reader.next()
@@ -163,14 +174,3 @@ class UnicodeReader(object):
         unicode_ = unicode
         return [(value if isinstance(value, float_) else
                  unicode_(value, encoding, encoding_errors)) for value in row]
-
-    def __iter__(self):
-        return self
-
-    @property
-    def dialect(self):
-        return self.reader.dialect
-
-    @property
-    def line_num(self):
-        return self.reader.line_num

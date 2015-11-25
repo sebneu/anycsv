@@ -13,3 +13,6 @@ class Table():
 
     def next(self):
         return self.csvReader.next()
+
+    def seek(self, i):
+        self.csvReader
