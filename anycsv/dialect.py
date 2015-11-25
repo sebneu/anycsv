@@ -1,6 +1,3 @@
-__author__ = 'jumbrich'
-
-
 import csv
 
 #removed stupid " "

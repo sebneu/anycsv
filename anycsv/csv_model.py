@@ -1,17 +1,12 @@
 class Table():
-    def __init__(self, fName=None, url=None):
-        self.headers = []
-        self.description = []
-        self.fName= fName
+    def __init__(self, filename=None, url=None):
+        self.filename = filename
         self.url=url
         self.csvReader = None
         self.delimiter = None
         self.quotechar = '"'
         self.encoding = None
-        self.numCols = -1
-
-    def add_description(self, descr):
-        self.description.append(descr)
+        self.columns = -1
 
     def __iter__(self):
         return self

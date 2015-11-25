@@ -12,14 +12,14 @@ from anycsv import io
 DEFAULT_ENCODING='utf-8'
 ENC_PRIORITY=['lib_chardet', 'header', 'default']
 
-def reader(fName=None, url=None, content=None):
+def reader(filename=None, url=None, content=None):
     logger = logging.getLogger(__name__)
 
-    if not fName and not url and not content:
+    if not filename and not url and not content:
         raise IOError('No CSV input specified')
 
-    meta = sniff_metadata(fName, url, content)
-    table = Table(url=url, fName=fName)
+    meta = sniff_metadata(filename, url, content)
+    table = Table(url=url, filename=filename)
 
     dialect = meta['dialect']
     if 'delimiter' in dialect:
@@ -31,8 +31,8 @@ def reader(fName=None, url=None, content=None):
 
     if content:
         input = StringIO.StringIO(content)
-    elif fName and os.path.exists(fName):
-        input = open(fName, 'rU')
+    elif filename and os.path.exists(filename):
+        input = open(filename, 'rU')
     elif url:
         input = requests.get(url, stream=True).iter_lines()
     else:
@@ -48,8 +48,8 @@ def reader(fName=None, url=None, content=None):
                                      delimiter=table.delimiter,
                                      quotechar=table.quotechar)
 
-    table.headers = table.csvReader.next()
-    table.numCols = len(table.headers)
+    table.columns = len(table.csvReader.next())
+    input.seek(0)
     return table
 
 
