@@ -125,8 +125,8 @@ class CsvReader:
     def __iter__(self):
         return self
 
-    def seek(self, i):
-        self.f.seek(i)
+    def seek(self, offset, whence=0):
+        self.f.seek(offset, whence=whence)
 
     @property
     def line_num(self):
