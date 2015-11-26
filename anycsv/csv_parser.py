@@ -126,7 +126,7 @@ class CsvReader:
         return self
 
     def seek(self, offset, whence=0):
-        self.f.seek(offset, whence=whence)
+        self.f.seek(offset, whence)
 
     @property
     def line_num(self):
