@@ -14,5 +14,5 @@ class Table():
     def next(self):
         return self.csvReader.next()
 
-    def seek(self, offset, whence=0):
-        self.csvReader.seek(offset, whence)
+    def seek_line(self, line_number):
+        self.csvReader.seek_line(line_number)

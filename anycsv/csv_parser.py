@@ -121,16 +121,25 @@ class CsvReader:
         self.f = f
         self.reader = reader
         self.encoding = encoding
+        self._start_line = 0
+        self.line_num = 0
 
     def __iter__(self):
         return self
 
-    def seek(self, offset, whence=0):
-        self.f.seek(offset, whence)
+    def seek_line(self, line_number):
+        if line_number < self.line_num:
+            self.f.seek(0)
+            self.line_num = 0
+        self._start_line = line_number
 
-    @property
-    def line_num(self):
-        return self.reader.line_num
+    def _next(self):
+        while self._start_line > self.line_num:
+            self.reader.next()
+            self.line_num += 1
+        row = self.reader.next()
+        self.line_num += 1
+        return row
 
 
 class EncodedCsvReader(CsvReader):
@@ -147,7 +156,7 @@ class EncodedCsvReader(CsvReader):
         CsvReader.__init__(self, f, reader, encoding)
 
     def next(self):
-        row = self.reader.next()
+        row = self._next()
         result = [unicode(s.decode(self.encoding)) for s in row]
         return result
 
@@ -167,7 +176,7 @@ class UnicodeReader(CsvReader):
         CsvReader.__init__(self, f, reader, encoding)
 
     def next(self):
-        row = self.reader.next()
+        row = self._next()
         encoding = self.encoding
         encoding_errors = self.encoding_errors
         float_ = float
