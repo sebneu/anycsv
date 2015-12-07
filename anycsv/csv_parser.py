@@ -34,7 +34,8 @@ def reader(filename=None, url=None, content=None):
     elif filename and os.path.exists(filename):
         input = open(filename, 'rU')
     elif url:
-        input = requests.get(url, stream=True).iter_lines()
+        req = requests.get(url, stream=True)
+        input = req.iter_lines()
     else:
         raise IOError('No CSV input specified')
 
@@ -48,8 +49,9 @@ def reader(filename=None, url=None, content=None):
                                      delimiter=table.delimiter,
                                      quotechar=table.quotechar)
 
-    table.columns = len(table.csvReader.next())
-    input.seek(0)
+    if not url:
+        table.columns = len(table.csvReader.next())
+        input.seek(0)
     return table
 
 
