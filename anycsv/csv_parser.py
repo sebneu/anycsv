@@ -8,6 +8,7 @@ import dialect
 import encoding
 from anycsv.csv_model import Table
 from anycsv import io
+import gzip
 
 DEFAULT_ENCODING='utf-8'
 ENC_PRIORITY=['lib_chardet', 'header', 'default']
@@ -32,7 +33,10 @@ def reader(filename=None, url=None, content=None):
     if content:
         input = StringIO.StringIO(content)
     elif filename and os.path.exists(filename):
-        input = open(filename, 'rU')
+        if filename[-3:] == '.gz':
+            input = gzip.open(filename, 'rb')
+        else:
+            input = open(filename, 'rU')
     elif url:
         input = URLHandle(url)
     else:
@@ -65,6 +69,7 @@ def sniff_metadata(fName= None, url=None, content=None, header=None, sniffLines=
         res = io.getContentAndHeader(fName=fName, url=url, download_dir="/tmp/", max_lines=sniffLines)
         content, header = res['content'], res['header']
 
+    
     logger.debug('(%s) Extracting CSV meta data ', id)
     meta = extract_csv_meta(header=header, content=content)
     logger.debug("(%s) Meta %s ", id, meta)
