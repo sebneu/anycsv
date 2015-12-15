@@ -12,13 +12,21 @@ from anycsv import io
 DEFAULT_ENCODING='utf-8'
 ENC_PRIORITY=['lib_chardet', 'header', 'default']
 
-def reader(filename=None, url=None, content=None):
+def reader(filename=None, url=None, content=None, skip_guess_encoding=False):
+    """
+
+    :param filename:
+    :param url:
+    :param content:
+    :param skip_guess_encoding: If true, the parser uses utf-8
+    :return:
+    """
     logger = logging.getLogger(__name__)
 
     if not filename and not url and not content:
         raise IOError('No CSV input specified')
 
-    meta = sniff_metadata(filename, url, content)
+    meta = sniff_metadata(filename, url, content, skip_guess_encoding=skip_guess_encoding)
     table = Table(url=url, filename=filename)
 
     dialect = meta['dialect']
@@ -53,7 +61,7 @@ def reader(filename=None, url=None, content=None):
     return table
 
 
-def sniff_metadata(fName= None, url=None, content=None, header=None, sniffLines=100):
+def sniff_metadata(fName= None, url=None, content=None, header=None, sniffLines=100, skip_guess_encoding=False):
     logger = logging.getLogger(__name__)
     id = url if url is not None else fName
 
@@ -66,40 +74,49 @@ def sniff_metadata(fName= None, url=None, content=None, header=None, sniffLines=
         content, header = res['content'], res['header']
 
     logger.debug('(%s) Extracting CSV meta data ', id)
-    meta = extract_csv_meta(header=header, content=content)
+    meta = extract_csv_meta(header=header, content=content, skip_guess_encoding=skip_guess_encoding)
     logger.debug("(%s) Meta %s ", id, meta)
 
     return meta
 
 
-def extract_csv_meta(header, fName=None, content=None, id=''):
+def extract_csv_meta(header, fName=None, content=None, id='', skip_guess_encoding=False):
     logger = logging.getLogger(__name__)
 
-    results = {'used_enc':None,
-               'enc': encoding.guessEncoding(content, header),
-               'dialect':{}}
+    results = {'used_enc': None,
+               'dialect': {}}
 
-    content_encoded = None
-    status="META "
-    c_enc = None
-    for k in ENC_PRIORITY:
-        #we try to use the different encodings
-        try:
-            if k in results['enc'] and results['enc'][k]['encoding'] is not None:
-                content_encoded = content.decode(encoding=results['enc'][k]['encoding'])
-                c_enc = results['enc'][k]['encoding']
-                status+=" encoding"
-                break
-        except Exception as e:
-            logger.debug('(%s) ERROR Tried %s encoding: %s', results['enc'][k]['encoding'],id, e)
-    if content_encoded:
-        results['used_enc'] = c_enc
-        try:
-            results['dialect'] = dialect.guessDialect(content_encoded)
-            status+=" dialect"
-        except Exception as e:
-            logger.warning('(%s)  %s',id, e.message)
-            results['dialect']={}
+    # get encoding
+    if skip_guess_encoding:
+        results['used_enc'] = DEFAULT_ENCODING
+        content_encoded = content.decode(encoding=results['used_enc'])
+        status="META encoding"
+    else:
+        results['enc'] = encoding.guessEncoding(content, header)
+
+        content_encoded = None
+        status="META "
+        c_enc = None
+        for k in ENC_PRIORITY:
+            #we try to use the different encodings
+            try:
+                if k in results['enc'] and results['enc'][k]['encoding'] is not None:
+                    content_encoded = content.decode(encoding=results['enc'][k]['encoding'])
+                    c_enc = results['enc'][k]['encoding']
+                    status+=" encoding"
+                    break
+            except Exception as e:
+                logger.debug('(%s) ERROR Tried %s encoding: %s', results['enc'][k]['encoding'],id, e)
+        if content_encoded:
+            results['used_enc'] = c_enc
+
+    # get dialect
+    try:
+        results['dialect'] = dialect.guessDialect(content_encoded)
+        status+=" dialect"
+    except Exception as e:
+        logger.warning('(%s)  %s',id, e.message)
+        results['dialect']={}
     else:
         try:
             results['dialect'] = dialect.guessDialect(content)
@@ -108,10 +125,10 @@ def extract_csv_meta(header, fName=None, content=None, id=''):
             logger.warning('(%s) Cannot guess the dialect: %s',id, e.message)
             results['dialect']={}
 
-    if fName:
-        results['charset'] = encoding.get_charset(fName)
+    #if fName:
+    #    results['charset'] = encoding.get_charset(fName)
 
-    logger.info("(%s) %s", id,status)
+    logger.info("(%s) %s", id, status)
     return results
 
 class URLHandle:
@@ -125,10 +142,10 @@ class URLHandle:
         self.input = req.iter_lines()
 
     def seek(self, offset):
-        if offset < _count:
+        if offset < self._count:
             self._init()
-        while offset < count:
-            self._next()
+        while offset < self._count:
+            self.next()
 
     def __iter__(self):
         return self
