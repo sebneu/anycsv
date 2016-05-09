@@ -304,13 +304,12 @@ class Sniffer:
 
         # build frequency tables
         chunkLength = min(10, len(data))
-        iteration = 0
         charFrequency = {}
         modes = {}
         delims = {}
         start, end = 0, min(chunkLength, len(data))
+        total = 0
         while start < len(data):
-            iteration += 1
             for line in data[start:end]:
                 for char in ascii:
                     metaFrequency = charFrequency.get(char, {})
@@ -339,7 +338,7 @@ class Sniffer:
 
             # build a list of possible delimiters
             modeList = modes.items()
-            total = float(chunkLength * iteration)
+            total += chunkLength
             # (rows of consistent data) / (number of rows) = 100%
             consistency = 1.0
             # minimum consistency threshold
@@ -347,7 +346,7 @@ class Sniffer:
             while len(delims) == 0 and consistency >= threshold:
                 for k, v in modeList:
                     if v[0] > 0 and v[1] > 0:
-                        if ((v[1]/total) >= consistency and
+                        if ((v[1]/float(total)) >= consistency and
                             (delimiters is None or k in delimiters)):
                             delims[k] = v
                 consistency -= 0.01
@@ -360,6 +359,7 @@ class Sniffer:
 
             # analyze another chunkLength lines
             start = end
+            chunkLength = min(chunkLength, len(data) - total)
             end += chunkLength
 
         if not delims:
