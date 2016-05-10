@@ -8,31 +8,40 @@ import dialect
 import encoding
 from anycsv.csv_model import Table
 from anycsv import io
+import exceptions
 import gzip
 
 DEFAULT_ENCODING='utf-8'
 ENC_PRIORITY=['lib_chardet', 'header', 'default']
 
-def reader(filename=None, url=None, content=None, skip_guess_encoding=False):
+def reader(filename=None, url=None, content=None, skip_guess_encoding=False, delimiter=None):
     """
 
     :param filename:
     :param url:
-    :param content:
+    :param content: The content of a CSV file as a string
     :param skip_guess_encoding: If true, the parser uses utf-8
+    :param delimiter:
     :return:
     """
     logger = logging.getLogger(__name__)
 
     if not filename and not url and not content:
-        raise IOError('No CSV input specified')
+        raise exceptions.AnyCSVException('No CSV input specified')
 
     meta = sniff_metadata(filename, url, content, skip_guess_encoding=skip_guess_encoding)
     table = Table(url=url, filename=filename)
 
     dialect = meta['dialect']
-    if 'delimiter' in dialect:
+    if delimiter:
+        table.delimiter = delimiter
+        if 'delimiter' in dialect and dialect['delimiter'] != delimiter:
+            logging.warning('The given delimiter differs from the guessed delimiter: ' + dialect['delimiter'])
+    elif 'delimiter' in dialect:
         table.delimiter = dialect['delimiter']
+    else:
+        raise exceptions.NoDelimiterException('No delimiter detected')
+
     if 'quotechar' in dialect:
         table.quotechar = dialect['quotechar']
 
@@ -48,7 +57,7 @@ def reader(filename=None, url=None, content=None, skip_guess_encoding=False):
     elif url:
         input = URLHandle(url)
     else:
-        raise IOError('No CSV input specified')
+        raise exceptions.AnyCSVException('No CSV input specified')
 
     if table.encoding and ('utf-8' in table.encoding or 'utf8' in table.encoding):
         table.csvReader = UnicodeReader(input,
