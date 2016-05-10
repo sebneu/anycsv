@@ -14,7 +14,7 @@ import gzip
 DEFAULT_ENCODING='utf-8'
 ENC_PRIORITY=['lib_chardet', 'header', 'default']
 
-def reader(filename=None, url=None, content=None, skip_guess_encoding=False, delimiter=None):
+def reader(filename=None, url=None, content=None, skip_guess_encoding=False, delimiter=None, sniff_lines=100):
     """
 
     :param filename:
@@ -22,6 +22,7 @@ def reader(filename=None, url=None, content=None, skip_guess_encoding=False, del
     :param content: The content of a CSV file as a string
     :param skip_guess_encoding: If true, the parser uses utf-8
     :param delimiter:
+    :param sniff_lines:
     :return:
     """
     logger = logging.getLogger(__name__)
@@ -29,14 +30,14 @@ def reader(filename=None, url=None, content=None, skip_guess_encoding=False, del
     if not filename and not url and not content:
         raise exceptions.AnyCSVException('No CSV input specified')
 
-    meta = sniff_metadata(filename, url, content, skip_guess_encoding=skip_guess_encoding)
+    meta = sniff_metadata(filename, url, content, skip_guess_encoding=skip_guess_encoding, sniffLines=sniff_lines)
     table = Table(url=url, filename=filename)
 
     dialect = meta['dialect']
     if delimiter:
         table.delimiter = delimiter
         if 'delimiter' in dialect and dialect['delimiter'] != delimiter:
-            logging.warning('The given delimiter differs from the guessed delimiter: ' + dialect['delimiter'])
+            logger.warning('The given delimiter differs from the guessed delimiter: ' + dialect['delimiter'])
     elif 'delimiter' in dialect:
         table.delimiter = dialect['delimiter']
     else:
