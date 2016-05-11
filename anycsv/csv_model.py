@@ -7,6 +7,7 @@ class Table():
         self.quotechar = '"'
         self.encoding = None
         self.columns = -1
+        self.dialect
 
     def __iter__(self):
         return self

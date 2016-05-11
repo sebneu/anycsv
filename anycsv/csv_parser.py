@@ -33,18 +33,18 @@ def reader(filename=None, url=None, content=None, skip_guess_encoding=False, del
     meta = sniff_metadata(filename, url, content, skip_guess_encoding=skip_guess_encoding, sniffLines=sniff_lines)
     table = Table(url=url, filename=filename)
 
-    dialect = meta['dialect']
+    table.dialect = meta['dialect']
     if delimiter:
         table.delimiter = delimiter
-        if 'delimiter' in dialect and dialect['delimiter'] != delimiter:
+        if 'delimiter' in table.dialect and table.dialect['delimiter'] != delimiter:
             logger.warning('The given delimiter differs from the guessed delimiter: ' + dialect['delimiter'])
-    elif 'delimiter' in dialect:
-        table.delimiter = dialect['delimiter']
+    elif 'delimiter' in table.dialect:
+        table.delimiter = table.dialect['delimiter']
     else:
         raise exceptions.NoDelimiterException('No delimiter detected')
 
-    if 'quotechar' in dialect:
-        table.quotechar = dialect['quotechar']
+    if 'quotechar' in table.dialect:
+        table.quotechar = table.dialect['quotechar']
 
     table.encoding = meta['used_enc']
 
