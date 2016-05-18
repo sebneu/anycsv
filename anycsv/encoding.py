@@ -10,6 +10,9 @@ __author__ = 'jumbrich'
 import subprocess
 import chardet
 from chardet.universaldetector import UniversalDetector
+
+import magic
+
 #from chardet.chardetect import UniversalDetector
 #import bs4
 
@@ -58,7 +61,8 @@ def get_charset(filename):
 
 def guessEncoding(content, header=None):
     results = {'default': {'encoding': 'utf8'}}
-    results['lib_chardet'] = guessWithChardet(content)
+    #results['lib_chardet'] = guessWithChardet(content)
+    results['magic']= guessWithMagic(content)
 
     if header:
         header_encoding = get_header_encoding(header)
@@ -66,21 +70,18 @@ def guessEncoding(content, header=None):
 
     return results
 
-
-#def guessWithMagic( fname ):
-#    blob = open(fname).read()
-#    m = magic.open(magic.MAGIC_MIME_ENCODING)
-#    m.load()
-#    encoding = m.buffer(blob)
-#    return encoding
-
-def guessWithChardet(fname):
+def guessWithChardet(content):
     u = UniversalDetector()
-    for line in fname:
+    for line in content:
         u.feed(line)
     u.close()
     result = u.result
     return result
+
+
+def guessWithMagic(content):
+    result = magic.detect_from_content(content)
+    return result.__dict__
 
 
 # #worth to look into

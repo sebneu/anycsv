@@ -12,7 +12,7 @@ import exceptions
 import gzip
 
 DEFAULT_ENCODING='utf-8'
-ENC_PRIORITY=['lib_chardet', 'header', 'default']
+ENC_PRIORITY=['magic', 'lib_chardet', 'header', 'default']
 
 def reader(filename=None, url=None, content=None, skip_guess_encoding=False, delimiter=None, sniff_lines=100):
     """
