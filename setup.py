@@ -7,6 +7,7 @@ setup(
     install_requires=[
         'requests',
         'chardet'
+        'file-magic'
     ],
     url='https://github.com/sebneu/anycsv',
     license='',
