@@ -5,7 +5,7 @@ import StringIO
 import requests
 
 import dialect
-import encoding
+
 from anycsv.csv_model import Table
 from anycsv import io
 import exceptions
@@ -102,7 +102,7 @@ def extract_csv_meta(header, content=None, id='', skip_guess_encoding=False):
     # check if guess encoding is possible
     if not skip_guess_encoding:
         try:
-            import magic
+            import encoding
         except:
             print 'Could not import "magic" library. To support encoding detection please install python-magic.'
             skip_guess_encoding = True
