@@ -8,9 +8,8 @@ __author__ = 'jumbrich'
 '''
 
 import subprocess
-import chardet
-from chardet.universaldetector import UniversalDetector
-
+#import chardet
+#from chardet.universaldetector import UniversalDetector
 import magic
 
 #from chardet.chardetect import UniversalDetector
@@ -70,13 +69,14 @@ def guessEncoding(content, header=None):
 
     return results
 
-def guessWithChardet(content):
-    u = UniversalDetector()
-    for line in content:
-        u.feed(line)
-    u.close()
-    result = u.result
-    return result
+
+#def guessWithChardet(content):
+#    u = UniversalDetector()
+#    for line in content:
+#        u.feed(line)
+#    u.close()
+#    result = u.result
+#    return result
 
 
 def guessWithMagic(content):
