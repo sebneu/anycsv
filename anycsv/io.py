@@ -66,7 +66,7 @@ def getContentAndHeader(fName=None, url=None, download_dir=None, max_lines=None)
             logger.debug("(%s) got content from disk %s", id, fName)
         else:
             logger.debug("(%s) file not found %s", id, fName)
-    if url:
+    if content is None and url:
         try:
             # head lookup
             logger.debug("(%s) perform head lookup on %s", id, url)
