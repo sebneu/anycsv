@@ -304,6 +304,11 @@ class Sniffer:
 
         # build frequency tables
         chunkLength = min(10, len(data))
+        # minimum consistency threshold
+        threshold = 0.8
+        # decrease threshold
+        if chunkLength < 10:
+            threshold = 0.6
         charFrequency = {}
         modes = {}
         delims = {}
@@ -341,8 +346,6 @@ class Sniffer:
             total += chunkLength
             # (rows of consistent data) / (number of rows) = 100%
             consistency = 1.0
-            # minimum consistency threshold
-            threshold = 0.8
             while len(delims) == 0 and consistency >= threshold:
                 for k, v in modeList:
                     if v[0] > 0 and v[1] > 0:
