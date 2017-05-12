@@ -1,4 +1,6 @@
-
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function, unicode_literals
 """
 csv.py - read/write/investigate CSV files
 """
@@ -180,9 +182,12 @@ class Sniffer:
 
         quotechar, doublequote, delimiter, skipinitialspace = \
                    self._guess_quote_and_delimiter(sample, delimiters)
-        if not delimiter:
-            delimiter, skipinitialspace = self._guess_delimiter(sample,
+        delimiter1, skipinitialspace1 = self._guess_delimiter(sample,
                                                                 delimiters)
+
+        if len(delimiter1.strip()) !=0 and delimiter != delimiter1:
+            if delimiter1 ==',':
+                delimiter=delimiter1
 
         if not delimiter:
             raise Error, "Could not determine delimiter"
@@ -215,14 +220,18 @@ class Sniffer:
         """
 
         matches = []
-        for restr in ('(?P<delim>[^\w\n"\'])(?P<space> ?)(?P<quote>["\']).*?(?P=quote)(?P=delim)', # ,".*?",
+        for restr in (
+                      '(?P<delim>[^\w\n"\'])(?P<space> ?)(?P<quote>["\']).*?(?P=quote)(?P=delim)', # ,".*?",
                       '(?:^|\n)(?P<quote>["\']).*?(?P=quote)(?P<delim>[^\w\n"\'])(?P<space> ?)',   #  ".*?",
-                      '(?P<delim>>[^\w\n"\'])(?P<space> ?)(?P<quote>["\']).*?(?P=quote)(?:$|\n)',  # ,".*?"
+                      '(?P<delim>[^\w\n"\'])(?P<space> ?)(?P<quote>["\']).*?(?P=quote)(?:$|\n|\r\n)',  # ,".*?"
                       '(?:^|\n)(?P<quote>["\']).*?(?P=quote)(?:$|\n)'):                            #  ".*?" (no delim, no space)
             regexp = re.compile(restr, re.DOTALL | re.MULTILINE)
-            matches = regexp.findall(data)
-            if matches:
-                break
+            m=regexp.findall(data)
+            if len(m)>0:
+                matches.append((m, regexp))
+            #matches = regexp.findall(data)
+            #if matches:
+            #    break
 
         if not matches:
             # (quotechar, doublequote, delimiter, skipinitialspace)
@@ -230,24 +239,25 @@ class Sniffer:
         quotes = {}
         delims = {}
         spaces = 0
-        for m in matches:
-            n = regexp.groupindex['quote'] - 1
-            key = m[n]
-            if key:
-                quotes[key] = quotes.get(key, 0) + 1
-            try:
-                n = regexp.groupindex['delim'] - 1
+        for ml, regexp in matches:
+            for m in ml:
+                n = regexp.groupindex['quote'] - 1
                 key = m[n]
-            except KeyError:
-                continue
-            if key and (delimiters is None or key in delimiters):
-                delims[key] = delims.get(key, 0) + 1
-            try:
-                n = regexp.groupindex['space'] - 1
-            except KeyError:
-                continue
-            if m[n]:
-                spaces += 1
+                if key:
+                    quotes[key] = quotes.get(key, 0) + 1
+                try:
+                    n = regexp.groupindex['delim'] - 1
+                    key = m[n]
+                except KeyError:
+                    continue
+                if key and (delimiters is None or key in delimiters):
+                    delims[key] = delims.get(key, 0) + 1
+                try:
+                    n = regexp.groupindex['space'] - 1
+                except KeyError:
+                    continue
+                if m[n]:
+                    spaces += 1
 
         quotechar = reduce(lambda a, b, quotes = quotes:
                            (quotes[a] > quotes[b]) and a or b, quotes.keys())

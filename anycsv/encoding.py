@@ -1,15 +1,12 @@
-#!/usr/bin/env python
-#
-# -*- coding: utf-8; -*-
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function, unicode_literals
 __author__ = 'jumbrich'
-
-'''
-    TODO consider header for
-'''
 
 import subprocess
 #import chardet
 #from chardet.universaldetector import UniversalDetector
+from cchardet import UniversalDetector
 import magic
 
 #from chardet.chardetect import UniversalDetector
@@ -60,7 +57,7 @@ def get_charset(filename):
 
 def guessEncoding(content, header=None):
     results = {'default': {'encoding': 'utf8'}}
-    #results['lib_chardet'] = guessWithChardet(content)
+    results['lib_chardet'] = guessWithChardet(content)
     results['magic']= guessWithMagic(content)
 
     if header:
@@ -70,13 +67,13 @@ def guessEncoding(content, header=None):
     return results
 
 
-#def guessWithChardet(content):
-#    u = UniversalDetector()
-#    for line in content:
-#        u.feed(line)
-#    u.close()
-#    result = u.result
-#    return result
+def guessWithChardet(content):
+    u = UniversalDetector()
+    for line in content.split(b"\n"):
+        u.feed(line)
+    u.close()
+    result = u.result
+    return result
 
 
 def guessWithMagic(content):
