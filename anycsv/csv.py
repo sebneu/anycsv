@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
+
 """
 csv.py - read/write/investigate CSV files
 """
@@ -58,17 +59,18 @@ class Dialect:
 
 class excel(Dialect):
     """Describe the usual properties of Excel-generated CSV files."""
-    delimiter = ','
-    quotechar = '"'
+    delimiter = str(',')
+    quotechar = str('"')
     doublequote = True
     skipinitialspace = False
-    lineterminator = '\r\n'
+    lineterminator = str('\r\n')
     quoting = QUOTE_MINIMAL
+
 register_dialect("excel", excel)
 
 class excel_tab(excel):
     """Describe the usual properties of Excel-generated TAB-delimited files."""
-    delimiter = '\t'
+    delimiter = str('\t')
 register_dialect("excel-tab", excel_tab)
 
 
@@ -186,8 +188,11 @@ class Sniffer:
                                                                 delimiters)
 
         if len(delimiter1.strip()) !=0 and delimiter != delimiter1:
-            if delimiter1 ==',':
+            if delimiter is None and delimiter1 is not None:
                 delimiter=delimiter1
+            elif delimiter1 == ',':
+                delimiter=delimiter1
+
 
         if not delimiter:
             raise Error, "Could not determine delimiter"

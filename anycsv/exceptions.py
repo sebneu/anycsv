@@ -8,3 +8,6 @@ class AnyCSVException(Exception):
 
 class NoDelimiterException(AnyCSVException):
     pass
+
+class FileSizeException(Exception):
+    pass

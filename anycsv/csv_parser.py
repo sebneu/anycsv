@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
+
 import csv
 import os
 import logging
@@ -11,14 +12,14 @@ from anycsv import dialect
 from anycsv import encoding
 from anycsv.csv_model import Table
 from anycsv import io_tools
-import anycsv.exceptions
+from anycsv import exceptions
 import gzip
 import io
 
 DEFAULT_ENCODING='utf-8'
 ENC_PRIORITY=['magic', 'lib_chardet', 'header', 'default']
 
-def reader(filename=None, url=None, content=None, skip_guess_encoding=False, delimiter=None, sniff_lines=100):
+def reader(filename=None, url=None, content=None, skip_guess_encoding=False, delimiter=None, sniff_lines=100, max_file_size=-1):
     """
 
     :param filename:
@@ -45,7 +46,7 @@ def reader(filename=None, url=None, content=None, skip_guess_encoding=False, del
     elif 'delimiter' in table.dialect:
         table.delimiter = table.dialect['delimiter']
     else:
-        raise anycsv.exceptions.NoDelimiterException('No delimiter detected')
+        raise exceptions.NoDelimiterException('No delimiter detected')
 
     if 'quotechar' in table.dialect:
         table.quotechar = table.dialect['quotechar']
@@ -53,16 +54,25 @@ def reader(filename=None, url=None, content=None, skip_guess_encoding=False, del
     table.encoding = meta['used_enc']
 
     if content:
+        if max_file_size!=-1  and len(content)> max_file_size:
+            raise exceptions.FileSizeException("Maximum file size exceeded {} > {} ".format(len(content), max_file_size))
         input = StringIO.StringIO(content)
     elif filename and os.path.exists(filename):
         if filename[-3:] == '.gz':
+            if max_file_size != -1 and os.stat(filename).st_size/0.4 > max_file_size: #assuming 40% compression / com/orig=0.4 -> orig = com/0.4
+                raise exceptions.FileSizeException(
+                    "Maximum file size exceeded {} > {} ".format(os.stat(filename).st_size, max_file_size))
+
             input = gzip.open(filename, 'rb')
         else:
+            if max_file_size != -1 and os.stat(filename).st_size  > max_file_size:
+                raise exceptions.FileSizeException(
+                    "Maximum file size exceeded {} > {} ".format(os.stat(filename).st_size, max_file_size))
             input = io.open(filename, 'rb')
     elif url:
-        input = URLHandle(url)
+        input = URLHandle(url,max_file_size)
     else:
-        raise anycsv.exceptions.AnyCSVException('No CSV input specified')
+        raise exceptions.AnyCSVException('No CSV input specified')
 
     if table.encoding and ('utf-8' in table.encoding or 'utf8' in table.encoding):
         table.csvReader = UnicodeReader(input,
@@ -151,9 +161,10 @@ def extract_csv_meta(header, content=None, id='', skip_guess_encoding=False):
 
 
 class URLHandle:
-    def __init__(self, url):
+    def __init__(self, url, max_file_size):
         self.url = url
         self._init()
+        self.max_file_size=max_file_size
 
     def _init(self):
         self._count = 0
@@ -172,6 +183,10 @@ class URLHandle:
     def next(self):
         next = self.input.next()
         self._count += len(next)
+        if self.max_file_size != -1 and self._count > self.max_file_size:
+            raise exceptions.FileSizeException(
+                "Maximum file size exceeded {} > {} ".format(self._count, self.max_file_size))
+
         return next
 
 
