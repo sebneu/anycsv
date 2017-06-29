@@ -19,7 +19,7 @@ import io
 DEFAULT_ENCODING='utf-8'
 ENC_PRIORITY=['magic', 'lib_chardet', 'header', 'default']
 
-def reader(filename=None, url=None, content=None, skip_guess_encoding=False, delimiter=None, sniff_lines=100, max_file_size=-1):
+def reader(filename=None, url=None, content=None, skip_guess_encoding=False, delimiter=None, sniff_lines=100, max_file_size=-1, timeout=10):
     """
 
     :param filename:
@@ -28,6 +28,7 @@ def reader(filename=None, url=None, content=None, skip_guess_encoding=False, del
     :param skip_guess_encoding: If true, the parser uses utf-8
     :param delimiter:
     :param sniff_lines:
+    :param timeout: url timeout in seconds
     :return:
     """
     logger = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ def reader(filename=None, url=None, content=None, skip_guess_encoding=False, del
     if not filename and not url and not content:
         raise exceptions.AnyCSVException('No CSV input specified')
 
-    meta = sniff_metadata(filename, url, content, skip_guess_encoding=skip_guess_encoding, sniffLines=sniff_lines)
+    meta = sniff_metadata(filename, url, content, skip_guess_encoding=skip_guess_encoding, sniffLines=sniff_lines, timeout=timeout)
     table = Table(url=url, filename=filename)
 
     table.dialect = meta['dialect']
@@ -70,7 +71,7 @@ def reader(filename=None, url=None, content=None, skip_guess_encoding=False, del
                     "Maximum file size exceeded {} > {} ".format(os.stat(filename).st_size, max_file_size))
             input = io.open(filename, 'rb')
     elif url:
-        input = URLHandle(url,max_file_size)
+        input = URLHandle(url,max_file_size,timeout)
     else:
         raise exceptions.AnyCSVException('No CSV input specified')
 
@@ -87,7 +88,7 @@ def reader(filename=None, url=None, content=None, skip_guess_encoding=False, del
     return table
 
 
-def sniff_metadata(fName= None, url=None, content=None, header=None, sniffLines=100, skip_guess_encoding=False):
+def sniff_metadata(fName= None, url=None, content=None, header=None, sniffLines=100, skip_guess_encoding=False, timeout=10):
     logger = logging.getLogger(__name__)
     id = url if url is not None else fName
 
@@ -96,7 +97,7 @@ def sniff_metadata(fName= None, url=None, content=None, header=None, sniffLines=
         return {}
 
     if not any([content, header]) and any([fName, url]):
-        res = io_tools.getContentAndHeader(fName=fName, url=url, download_dir="/tmp/", max_lines=sniffLines)
+        res = io_tools.getContentAndHeader(fName=fName, url=url, download_dir="/tmp/", max_lines=sniffLines, timeout=timeout)
         content, header = res['content'], res['header']
 
     
@@ -161,14 +162,15 @@ def extract_csv_meta(header, content=None, id='', skip_guess_encoding=False):
 
 
 class URLHandle:
-    def __init__(self, url, max_file_size):
+    def __init__(self, url, max_file_size, timeout):
         self.url = url
+        self.timeout = timeout
         self._init()
         self.max_file_size=max_file_size
 
     def _init(self):
         self._count = 0
-        req = requests.get(self.url)
+        req = requests.get(self.url, timeout=self.timeout)
         self.input = req.iter_lines(chunk_size=1024)
 
     def seek(self, offset):

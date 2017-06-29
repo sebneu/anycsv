@@ -42,11 +42,11 @@ def getContentFromDisk(fname_csv, max_lines=-1):
     return file_content
 
 
-def getContentFromWeb(url, max_lines=100):
+def getContentFromWeb(url, timeout, max_lines=100):
     # save file to local directory
 
     if max_lines >- 1:
-        with closing(requests.get(url)) as r:
+        with closing(requests.get(url, timeout=timeout)) as r:
             input = r.iter_lines(chunk_size=1024, delimiter=b"\n")
             c =0
 
@@ -64,11 +64,11 @@ def getContentFromWeb(url, max_lines=100):
             content = b'\n'.join(lines)
             #print ("CC", len(content))
     else:
-        content = requests.get(url).read()
+        content = requests.get(url, timeout=timeout).read()
 
     return content
 
-def getContentAndHeader(fName=None, url=None, download_dir=None, max_lines=None):
+def getContentAndHeader(fName=None, url=None, download_dir=None, max_lines=None, timeout=None):
 
     id= url if url else fName
     logger.debug("(%s) sniff content, max_lines:%s", id, max_lines)
@@ -89,11 +89,11 @@ def getContentAndHeader(fName=None, url=None, download_dir=None, max_lines=None)
         try:
             # head lookup
             logger.debug("(%s) perform head lookup on %s", id, url)
-            head = requests.head(url)
+            head = requests.head(url, timeout=timeout)
             status_code = head.status_code
             header = dict(head.headers)
             if not content:
-                content = getContentFromWeb(url, max_lines=max_lines)
+                content = getContentFromWeb(url, timeout=timeout, max_lines=max_lines)
                 logger.debug("(%s) got content from Web", url)
         except Exception as e:
             print (e)

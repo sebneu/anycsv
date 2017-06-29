@@ -6,7 +6,8 @@ setup(
     packages=find_packages(),
     install_requires=[
         'requests',
-        'file-magic'
+        'file-magic',
+        'cchardet'
     ],
     url='https://github.com/sebneu/anycsv',
     license='',
